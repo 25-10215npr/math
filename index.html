@@ -2,107 +2,239 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name = "description" content = "10215 수학꿈끼">  
+  <meta name="description" content="10215 수학꿈끼">  
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name = "author" content = "승연"> 
-  <title> 점프 그래프 </title>
-  <link rel="stylesheet" href="index.css" />
+  <meta name="author" content="승연"> 
+  <title>Jump & Gravity Visualizer</title>
+
+  <style>
+    :root{
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --stroke:rgba(10,20,40,.10);
+      --text:rgba(10,20,40,.9);
+      --muted:rgba(10,20,40,.55);
+      --shadow:0 10px 30px rgba(10,20,40,.08);
+      --shadow2:0 6px 18px rgba(10,20,40,.06);
+      --r:18px;
+      --blue:#2f7cff;
+      --green:#22c55e;
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%; margin:0;}
+    body{
+      background:var(--bg);
+      font-family:system-ui,"Noto Sans KR",sans-serif;
+      color:var(--text);
+    }
+
+    /* 시작 오버레이 */
+    #startOverlay{
+      position:fixed;
+      inset:0;
+      background:#0b0d12;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      cursor:pointer;
+    }
+    #startOverlay img{
+      max-width:90%;
+      max-height:80%;
+    }
+    .startText{
+      margin-top:16px;
+      color:#aaa;
+      letter-spacing:.2em;
+    }
+
+    .shell{
+      height:100vh;
+      display:grid;
+      grid-template-columns:340px 1fr;
+      gap:14px;
+      padding:14px;
+    }
+
+    .panel{
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:var(--r);
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .card{
+      border:1px solid rgba(10,20,40,.08);
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:6px;
+      font-size:13px;
+    }
+
+    input[type=range]{width:100%; accent-color:var(--blue);}
+
+    .btnRow{display:flex; gap:10px;}
+    .btn{
+      flex:1;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid rgba(10,20,40,.15);
+      background:#fff;
+      cursor:pointer;
+      font-weight:700;
+    }
+    .btn.primary{
+      background:rgba(47,124,255,.12);
+      color:#204a9c;
+    }
+
+    .main{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .pane{
+      background:#fff;
+      border:1px solid var(--stroke);
+      border-radius:var(--r);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    .paneHead{
+      padding:10px 14px;
+      border-bottom:1px solid rgba(10,20,40,.08);
+      font-weight:700;
+    }
+
+    canvas{width:100%; height:100%;}
+  </style>
 </head>
+
 <body>
 
-  <!-- 시작 이미지 오버레이 -->
-  <div id="startOverlay">
-    <img src="https://mail.google.com/mail/u/0?ui=2&ik=dd488b2d31&attid=0.1&permmsgid=msg-a:r-8863865409954091111&th=19b67a2c9600c455&view=fimg&fur=ip&permmsgid=msg-a:r-8863865409954091111&sz=s0-l75-ft&attbid=ANGjdJ9P-we-hvrYe-gW4LlFqTqhGZBaRvDGKgt7u4WrYVNabErtUBTwb3LNEllHBaldqRu8f_KX1N9qpqoQIniJxVvDePHo_ayE0qyqIh8d96ajy5E-poAhKzvUL_Q&disp=emb&realattid=ii_19b67a28d398adb52d61&zw" alt="start image">
-    <p class="startText">시작</p>
-  </div>
+<!-- 시작 화면 -->
+<div id="startOverlay">
+  <img src="start.png" alt="start">
+  <div class="startText">CLICK TO START</div>
+</div>
 
-  <div class="shell">
-    <aside class="panel">
-      <div class="panelHead">
-        <div class="titleRow">
-          <h1> 변인요소 </h1>
-          <span class="pill"> 수학꿈끼 </span>
-        </div>
-        <p class="sub">
-          <span class="mono">vy -= g·dt</span> <span class="mono">,     y += vy·dt</span>
-        </p>
-      </div>
+<div class="shell">
+  <aside class="panel">
+    <h3>변인 요소</h3>
 
-      <div class="card">
-        <div class="row">
-          <div class="label">중력 g</div>
-          <div class="value mono" id="gText">9.8</div>
-        </div>
-        <input id="g" type="range" min="1" max="25" step="0.1" value="9.8" />
-      </div>
+    <div class="card">
+      <div class="row"><span>중력 g</span><span id="gText">9.8</span></div>
+      <input id="g" type="range" min="1" max="25" step="0.1" value="9.8">
+    </div>
 
-      <div class="card">
-        <div class="row">
-          <div class="label">점프 초기속도 v₀</div>
-          <div class="value mono" id="v0Text">10.0</div>
-        </div>
-        <input id="v0" type="range" min="2" max="25" step="0.1" value="10.0" />
-      </div>
+    <div class="card">
+      <div class="row"><span>초기속도 v₀</span><span id="v0Text">10.0</span></div>
+      <input id="v0" type="range" min="2" max="25" step="0.1" value="10">
+    </div>
 
-      <div class="card two">
-        <label class="check">
-          <input id="follow" type="checkbox" checked />
-          <span>카메라 따라가기</span>
-        </label>
-        <label class="check">
-          <input id="autoGraph" type="checkbox" checked />
-          <span>그래프 자동 스케일</span>
-        </label>
-      </div>
+    <div class="btnRow">
+      <button class="btn primary" id="jumpBtn">점프</button>
+      <button class="btn" id="resetBtn">초기화</button>
+    </div>
 
-      <div class="card">
-        <div class="row">
-          <div class="label">시뮬레이션 y축 비율</div>
-          <div class="value mono" id="simZoomText">1.0×</div>
-        </div>
-        <input id="simZoom" type="range" min="0.5" max="3" step="0.1" value="1.0" />
-      </div>
+    <div id="info">t=0 y=0 vy=0</div>
+  </aside>
 
-      <div class="card">
-        <div class="row">
-          <div class="label">그래프 Y축 비율</div>
-          <div class="value mono" id="graphZoomText">1.0×</div>
-        </div>
-        <input id="graphZoom" type="range" min="0.5" max="3" step="0.1" value="1.0" />
-      </div>
+  <main class="main">
+    <div class="pane">
+      <div class="paneHead">시뮬레이션</div>
+      <canvas id="sim"></canvas>
+    </div>
+    <div class="pane">
+      <div class="paneHead">그래프</div>
+      <canvas id="graph"></canvas>
+    </div>
+  </main>
+</div>
 
-      <div class="btnRow">
-        <button class="btn primary" id="jumpBtn">점프</button>
-        <button class="btn" id="resetBtn">초기화</button>
-      </div>
+<script>
+const sim = document.getElementById("sim");
+const ctx = sim.getContext("2d");
+const graph = document.getElementById("graph");
+const gctx = graph.getContext("2d");
 
-      <div class="status mono" id="info">t=0.00  y=0.00  vy=0.00</div>
+const gInput = document.getElementById("g");
+const v0Input = document.getElementById("v0");
+const gText = document.getElementById("gText");
+const v0Text = document.getElementById("v0Text");
+const info = document.getElementById("info");
 
-      <div class="hint">
-      이것은 10215 우승연의 수학꿈끼 <br>
-      오타가 있거나, 코드에러가 발생해도 <b> 눈감고 모른척해 </b>
-       </div>
-    </aside>
+function resize(){
+  sim.width = sim.clientWidth;
+  sim.height = sim.clientHeight;
+  graph.width = graph.clientWidth;
+  graph.height = graph.clientHeight;
+}
+window.addEventListener("resize", resize);
+resize();
 
-    <main class="main">
-      <section class="pane">
-        <header class="paneHead">
-          <div class="paneTitle">시뮬레이션</div>
-          <div class="paneSub mono">y(m), vy(m/s)</div>
-        </header>
-        <canvas id="sim"></canvas>
-      </section>
+let t=0, y=0, vy=0;
+let history=[];
 
-      <section class="pane">
-        <header class="paneHead">
-          <div class="paneTitle"> 점프 그래프</div>
-          <div class="paneSub mono">y(t) with axes</div>
-        </header>
-        <canvas id="graph"></canvas>
-      </section>
-    </main>
-  </div>
+gInput.oninput=()=>gText.textContent=gInput.value;
+v0Input.oninput=()=>v0Text.textContent=v0Input.value;
 
-  <script src="index.java"></script>
+document.getElementById("jumpBtn").onclick=()=>{
+  if(y===0) vy=+v0Input.value;
+};
+document.getElementById("resetBtn").onclick=()=>{
+  t=0; y=0; vy=0; history=[];
+};
+
+document.getElementById("startOverlay").onclick=()=>{
+  document.getElementById("startOverlay").style.display="none";
+};
+
+function loop(){
+  const g=+gInput.value;
+  t+=0.016;
+  vy-=g*0.016;
+  y+=vy*0.016;
+  if(y<0){y=0; vy=0;}
+  history.push({t,y});
+  if(history.length>300) history.shift();
+
+  ctx.clearRect(0,0,sim.width,sim.height);
+  ctx.beginPath();
+  ctx.arc(sim.width/2, sim.height-50-y*20, 16, 0, Math.PI*2);
+  ctx.fillStyle="#2f7cff";
+  ctx.fill();
+
+  gctx.clearRect(0,0,graph.width,graph.height);
+  gctx.beginPath();
+  history.forEach((p,i)=>{
+    const x=i*2;
+    const yy=graph.height-p.y*20-20;
+    i?gctx.lineTo(x,yy):gctx.moveTo(x,yy);
+  });
+  gctx.strokeStyle="#22c55e";
+  gctx.stroke();
+
+  info.textContent=`t=${t.toFixed(2)} y=${y.toFixed(2)} vy=${vy.toFixed(2)}`;
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+
 </body>
 </html>
